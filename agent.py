@@ -1,57 +1,31 @@
-import os
-from dotenv import load_dotenv
-from groq import Groq
+from llama_cpp import Llama #type: ignore
 
-# Load the API key from the .env file into the environment
-load_dotenv()
+# Initialize the model
+llm = Llama(
+    model_path="Qwen3-4B-Q4_K_M.gguf",
+    n_ctx=4096,
+    n_threads=4
+)
 
-# Initialize the client
-client = Groq()
+# Define your system instructions and user prompt
+system_prompt = "You are a helpful assistant that speaks like a 1920s pirate."
+user_prompt = "What is the capital of France?"
 
-# 1. Initialize Memory and Cache
-# 3 conversations = 3 user messages + 3 assistant messages = 6 total items
-MAX_HISTORY = 6 
-conversation_history = []
-prompt_cache = {}
+# Format the input using Qwen's chat template
+full_prompt = (
+    f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+    f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
+    f"<|im_start|>assistant\n"
+    f"<think>\n\n</think>\n\n"
+)
 
-system_prompt = {"role": "system", "content": "You are a sarcastic robot. Keep your answers under 20 words."}
+# Generate response
+output = llm(
+    full_prompt, 
+    max_tokens=150,
+    stop=["<|im_end|>", "<|im_start|>"], # Prevent the model from hallucinating a response to itself
+    temperature=0.7
+)
 
-while True:
-    user_input = input("You: ")
-    if user_input.lower() in ["exit", "quit"]:
-        print("Exiting...")
-        break
-    
-    current_user_message = {"role": "user", "content": user_input}
-    
-    # Construct the full context: System + History + Current User Input
-    messages = [system_prompt] + conversation_history + [current_user_message]
-    
-    # 2. Create a unique cache key based on the exact conversation context
-    # Converting the messages list to a string creates a unique identifier for this exact state
-    cache_key = str(messages)
-    
-    # 3. Check Cache
-    if cache_key in prompt_cache:
-        ai_response = prompt_cache[cache_key]
-        print(f"AI (Cached): {ai_response}")
-    else:
-        # 4. Call the API if not in cache
-        response = client.chat.completions.create(
-            model="qwen/qwen3.8-27b",
-            messages=messages
-        )
-        ai_response = response.choices[0].message.content
-        print(f"AI: {ai_response}")
-        
-        # Store the new API response in the cache
-        prompt_cache[cache_key] = ai_response
-
-    # 5. Update Memory
-    # Append both the user's input and the AI's response to the history
-    conversation_history.append(current_user_message)
-    conversation_history.append({"role": "assistant", "content": ai_response})
-    
-    # Trim the history to ensure it only keeps the last 3 conversations (6 messages)
-    if len(conversation_history) > MAX_HISTORY:
-        conversation_history = conversation_history[-MAX_HISTORY:]
+# Print the model's text response
+print(output["choices"][0]["text"])
