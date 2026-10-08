@@ -11,16 +11,17 @@ llm = Llama(
     verbose=False,
 )
 
-system_prompt = "You are a helpful and friendly assistant named 'Ruby'."
+with open('sys_prompt.txt', 'r')as f:
+    system_prompt = f.read()
 
 # Rolling memory: list of (user, assistant) pairs – keep only the last 3
-history = []          # max length 3
+history = []   # max length 3
 MAX_HISTORY = 3
 
 while True:
     user_prompt = input("User: ")
     if user_prompt.lower() in ["exit", "quit"]:
-        print("Exiting the chat. Farewell, matey!")
+        print("Exiting the chat.")
         break
 
     # Build the full prompt
