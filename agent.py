@@ -9,23 +9,28 @@ llm = Llama(
 
 # Define your system instructions and user prompt
 system_prompt = "You are a helpful assistant that speaks like a 1920s pirate."
-user_prompt = "What is the capital of France?"
 
-# Format the input using Qwen's chat template
-full_prompt = (
-    f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
-    f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
-    f"<|im_start|>assistant\n"
-    f"<think>\n\n</think>\n\n"
-)
+while True:
+    user_prompt = input("User: ")
+    if user_prompt.lower() in ["exit", "quit"]:
+        print("Exiting the chat. Farewell, matey!")
+        break
 
-# Generate response
-output = llm(
-    full_prompt, 
-    max_tokens=150,
-    stop=["<|im_end|>", "<|im_start|>"], # Prevent the model from hallucinating a response to itself
-    temperature=0.7
-)
+    # Format the input using Qwen's chat template
+    full_prompt = (
+        f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+        f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
+        f"<|im_start|>assistant\n"
+        f"<think>\n\n</think>\n\n"
+    )
 
-# Print the model's text response
-print(output["choices"][0]["text"])
+    # Generate response
+    output = llm(
+        full_prompt, 
+        max_tokens=150,
+        stop=["<|im_end|>", "<|im_start|>"], # Prevent the model from hallucinating a response to itself
+        temperature=0.7
+    )
+
+    # Print the model's text response
+    print(output["choices"][0]["text"])
