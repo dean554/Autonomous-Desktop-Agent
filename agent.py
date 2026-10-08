@@ -38,16 +38,22 @@ while True:
     )
 
     # Generate response
-    output = llm(
+    stream = llm(
         full_prompt,
-        max_tokens=150,
+        max_tokens=200,
         stop=["<|im_end|>", "<|im_start|>"],
         temperature=0.7,
+        stream=True,
     )
 
-    assistant_reply = output["choices"][0]["text"].strip()
-    print(assistant_reply)
+    assistant_reply = ""
 
+    for chunk in stream:
+        token = chunk["choices"][0]["text"]
+        print(token, end="", flush=True)
+        assistant_reply += token
+    print()  # for newline after the assistant's reply
+    
     # Update memory (keep only the latest 3 turns)
     history.append((user_prompt, assistant_reply))
     if len(history) > MAX_HISTORY:
