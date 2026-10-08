@@ -80,7 +80,3 @@ class ChatAgent:
             
             self.chat(user_prompt)
 
-# Execute the script
-if __name__ == "__main__":
-    agent = ChatAgent()
-    agent.start_console()
