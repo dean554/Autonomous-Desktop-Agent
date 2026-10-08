@@ -70,13 +70,4 @@ class ChatAgent:
         self._update_history(user_prompt, assistant_reply)
         return assistant_reply
 
-    def start_console(self):
-        """Runs the interactive terminal chat loop."""
-        while True:
-            user_prompt = input("User: ")
-            if user_prompt.lower() in ["exit", "quit"]:
-                print("Exiting the chat.")
-                break
-            
-            self.chat(user_prompt)
 
