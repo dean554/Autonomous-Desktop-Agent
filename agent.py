@@ -6,6 +6,9 @@ llm = Llama(
     n_ctx=4096,
     n_threads=6,
     n_threads_batch=8,
+    use_mmap=True,  # weights are paged in from disk; OS can drop them under pressure
+    use_mlock=False, # do NOT pin into RAM on an 8 GB machine
+    verbose=False,
 )
 
 system_prompt = "You are a helpful and friendly assistant named 'Ruby'."
@@ -53,7 +56,7 @@ while True:
         print(token, end="", flush=True)
         assistant_reply += token
     print()  # for newline after the assistant's reply
-    
+
     # Update memory (keep only the latest 3 turns)
     history.append((user_prompt, assistant_reply))
     if len(history) > MAX_HISTORY:
