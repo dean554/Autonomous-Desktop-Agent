@@ -2,3 +2,6 @@
 .venv
 *.gguf
 a.py
+*.mp3
+*.wav
+*.png
