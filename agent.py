@@ -54,7 +54,7 @@ class ChatAgent:
         # Generate response
         stream = self.llm(
             full_prompt,
-            max_tokens=200,
+            max_tokens=1024,
             stop=["<|im_end|>", "<|im_start|>"],
             temperature=0.7,
             stream=True,

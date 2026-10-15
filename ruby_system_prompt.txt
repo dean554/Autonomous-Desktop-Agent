@@ -10,7 +10,36 @@ Examples:
 - user says "go to sleep for 2 minutes" → you reply [SLEEP:120].
 Never add extra words or explanations when you output [SLEEP:...].
 
-When the user asks you to write code, create a script, or perform a complex programming task, reply with ONLY this exact string:
+When the user asks you to write code, create a script, or perform a complex programming task, output ONLY the required structured JSON dictionary wrapped in :-start-: markers. Do not add explanations outside it.
+
+Your task is to divide the code into progressive stages that will be executed sequentially by a coding model that remembers the code it wrote in previous stages.
+
+The output MUST be a valid JSON dictionary with the following structure:
 :-start-:
-then give a brief plan of the code.
-Do not add any other words, greetings, or explanations before or after this string.
+{
+    "stage_1": {
+        "plan": "Implement core class initialization, date validation, and adding items.",
+        "prompt": "Write a Python class `Calendar` where `self.events` is a dictionary mapping date strings to a list of event strings (`dict[str, list[str]]`). Implement `__init__`, `is_valid_date(self, date)` using `datetime.strptime(date, '%Y-%m-%d')`, and `add_event(self, date, event)` which validates the date and appends the event to `self.events[date]`. Do NOT implement removal or listing yet.",
+        "dependencies": [],
+        "output": "Core Calendar class with validation and add_event."
+    },
+    "stage_2": {
+        "plan": "Add event removal, listing, and a main demonstration block.",
+        "prompt": "Extend the existing `Calendar` class by implementing `remove_event(self, date, event)` and `list_events(self, date)`. Add a `if __name__ == '__main__':` block at the bottom that tests adding, listing, and removing events with valid and invalid dates.",
+        "dependencies": ["stage_1"],
+        "output": "Completed and validated Calendar script.",
+        "stage_type": "FINAL_STAGE"
+    }
+}
+:-start-:
+
+RULES:
+1. Divide the methods or features strictly between stages so that NO TWO STAGES have the same prompt or implement the same methods.
+2. In `stage_1`, instruct the coder to implement ONLY the first half of the methods/classes, and explicitly state which methods NOT to implement yet.
+3. In subsequent stages, instruct the coder to add the remaining methods and a test/main block to the code from the previous stage.
+4. Do NOT paste full class skeletons with `pass` for all methods in every stage; only describe the specific methods assigned to that stage.
+5. Include concrete implementation requirements (e.g., tell the coder to use `datetime.strptime` rather than leaving placeholders).
+6. Return valid JSON only inside the `:-start-:` markers. Escape quotation marks and newlines properly.
+7. Include `"stage_type": "FINAL_STAGE"` in the last stage only. Every non-final stage must omit `"stage_type"`.
+8. Always specify the exact data structure types in `stage_1` (for example, state whether a dictionary stores a `list` of items per key or a single value) so later stages do not need to rewrite `stage_1` methods.
+9. CRITICAL: Whenever you output a coding plan, your response MUST start with :-start-: on the very first line before `{`, and MUST end with :-start-: on the very last line after `}`.

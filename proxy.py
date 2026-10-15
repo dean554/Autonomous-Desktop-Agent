@@ -4,6 +4,7 @@ from other_local_models.coder import Qwen_coder
 import time
 import re
 import gc
+import json
 
 class ProxyAgentController:
     #Controller class to manage the lifecycle of the main ChatAgent and the secondary Qwen coder.
@@ -75,7 +76,53 @@ class ProxyAgentController:
 
                 print(">>> Running Qwen_coder...")
                 qwen_coder_instance = self.initialize_coder_agent()
-                coder_reply = qwen_coder_instance.ccode(agent_reply)
+
+                # 1. Extract the JSON between the markers
+                start_marker = ":-start-:"
+                start = agent_reply.index(start_marker) + len(start_marker)
+                end = agent_reply.index(start_marker, start)
+                json_string = agent_reply[start:end].strip()
+
+                # 2. Convert JSON string into a Python dictionary
+                stages = json.loads(json_string)
+
+                # Keep track of code written in previous stages so the coder can integrate it
+                accumulated_code = ""
+
+                for stage_name, stage_data in stages.items():
+                    # Print stage details BEFORE generating the response
+                    print("\n" + "-" * 50)
+                    print(f"Executing: {stage_name}")
+                    print("-" * 50)
+                    print(stage_data)
+                    print("-" * 50)
+
+                    # Send clean instructions without markdown headers that trigger repetition
+                    if stage_data.get("dependencies"):
+                        stage_prompt = (
+                            f"Now execute {stage_name}: {stage_data['plan']}\n"
+                            f"Instructions: {stage_data['prompt']}\n\n"
+                            f"CRITICAL RULES:\n"
+                            f"1. Keep ALL imports, helper methods, and validation checks you wrote in the previous stage. Do NOT delete or omit any existing methods.\n"
+                            f"2. Integrate the new methods and logic into the existing class/script and output the complete, unified Python code inside a single ```python code block."
+                        )
+                    else:
+                        stage_prompt = (
+                            f"Execute {stage_name}: {stage_data['plan']}\n"
+                            f"Instructions: {stage_data['prompt']}\n"
+                            f"Write ONLY the Python code required for this stage inside a single ```python code block."
+                        )
+
+                    coder_reply = qwen_coder_instance.ccode(stage_prompt)
+                
+                # Clean up coder model before restoring primary model
+                print("\n>>> Qwen_coder has finished execution.")
+                del qwen_coder_instance
+                gc.collect()
+
+                print(">>> Restoring primary model...\n")
+                active_agent = self.initialize_chat_agent()
+                print(">>> Model is back online.\n")
 
                 # Check if the coder output contains the completion marker
                 coder_done_match = re.search(r":-done-:", coder_reply)

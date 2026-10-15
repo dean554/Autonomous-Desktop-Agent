@@ -18,19 +18,21 @@ class Qwen_coder:
             verbose=False
         )
 
-    def prompt(self, messages):
-        # 2. Create the prompt structure (Qwen2.5-Coder expects ChatML format)
-        return [
-            {"role": "system", "content": coder_system_prompt},
-            {"role": "user", "content": messages}
+        # Keep multi-turn conversation history across stages
+        self.messages = [
+            {"role": "system", "content": coder_system_prompt}
         ]
 
 
 # 4. Generate the response
     def ccode(self, messages):
         print("\n--- Generating Response ---")
+
+        # 1. Add the current stage instructions to the conversation history
+        self.messages.append({"role": "user", "content": messages})
+
         stream = self.llm.create_chat_completion(
-            messages=self.prompt(messages),
+            messages=self.messages,
             max_tokens=1024,
             temperature=0.1,
             stream=True
@@ -43,5 +45,9 @@ class Qwen_coder:
                 token = delta["content"]
                 print(token, end="", flush=True)
                 assistant_reply += token
+        print()
+
+        # Save the model's code in history so the next stage can build on it
+        self.messages.append({"role": "assistant", "content": assistant_reply})
         return assistant_reply
 
