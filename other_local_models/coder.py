@@ -18,7 +18,9 @@ class Qwen_coder:
     def prompt(self, messages):
         # 2. Create the prompt structure (Qwen2.5-Coder expects ChatML format)
         return [
-            {"role": "system", "content": "You are a coder. only give the code that ask for. nothing else. no explanations, no greetings."},
+            {"role": "system", "content": """You are a coder. Only give the code that is asked for. Nothing else. No explanations, no greetings.
+            At the very end of your response, after the code block, you must output exactly this string and nothing else:
+            :-done-:"""},
             {"role": "user", "content": messages}
         ]
 
@@ -39,7 +41,5 @@ class Qwen_coder:
                 token = delta["content"]
                 print(token, end="", flush=True)
                 assistant_reply += token
+        return assistant_reply
 
-c = Qwen_coder()
-
-c.ccode()

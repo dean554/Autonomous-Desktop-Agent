@@ -1,5 +1,6 @@
 # proxy.py
 from agent import ChatAgent
+from other_local_models.coder import Qwen_coder
 import time
 import re
 import gc
@@ -19,7 +20,13 @@ class handle_Ruby:
         )
         print("Agent is ready!")
         return agent
+    
+    def coder_agent(self):
+        coder = Qwen_coder()
 
+        print("coder is running!")
+        return coder
+        
     def run_proxy(self):
         agent = self.create_agent()
 
@@ -35,13 +42,16 @@ class handle_Ruby:
 
             # Check if the model asked to sleep
             sleep_match = re.search(r"\[SLEEP:(\d+)\]", reply)
+
+            command = re.search(r":-start-:", reply)
+
             if sleep_match:
                 seconds = int(sleep_match.group(1))
                 print(f"\n>>> Model requested sleep for {seconds} seconds. Releasing model...")
 
                 # Completely destroy the agent (releases the LLM from RAM/CPU)
                 del agent
-                gc.collect()          # force garbage collection
+                gc.collect()# force garbage collection
                 agent = None
 
                 print(f">>> Sleeping for {seconds} seconds...")
@@ -50,6 +60,27 @@ class handle_Ruby:
                 # Restart a brand-new agent
                 agent = self.create_agent()
                 print(">>> Model is back online.\n")
+
+            elif command:
+                print(">>> Model requested to run the Qwen_coder. Releasing model...")
+                del agent
+                gc.collect()# force garbage collection
+                agent = None
+
+                print(">>> Running Qwen_coder...")
+                coder_agent = self.coder_agent()
+                coder_agent.prompt("make a simple calculator in python")
+
+                coder_reply = coder_agent.ccode()
+                c = re.search(r":-done-:", coder_reply)
+
+                if c:
+                    print(">>> Qwen_coder has finished execution.")
+                    print(">>> Model is back online.\n")
+                    agent = self.create_agent()
+                    print(">>> Model is back online.\n")
+
+
 
 model_path="Qwen3-4B-Q4_K_M.gguf"
 prompt_file="sys_prompt.txt"
