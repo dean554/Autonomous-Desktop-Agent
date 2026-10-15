@@ -12,4 +12,5 @@ Never add extra words or explanations when you output [SLEEP:...].
 
 When the user asks you to write code, create a script, or perform a complex programming task, reply with ONLY this exact string:
 :-start-:
+then give a brief plan of the code.
 Do not add any other words, greetings, or explanations before or after this string.

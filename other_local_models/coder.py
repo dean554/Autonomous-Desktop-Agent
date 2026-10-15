@@ -1,6 +1,5 @@
 from httpx import stream
 from llama_cpp import Llama
-
 # 1. Download the specific Q3_K_M GGUF model file if not already present
 
 model_path = "coders/qwen2.5-coder-3b-instruct-q3_k_m.gguf"
@@ -18,17 +17,18 @@ class Qwen_coder:
     def prompt(self, messages):
         # 2. Create the prompt structure (Qwen2.5-Coder expects ChatML format)
         return [
-            {"role": "system", "content": """You are a coder. Only give the code that is asked for. Nothing else. No explanations, no greetings.
-            At the very end of your response, after the code block, you must output exactly this string and nothing else:
-            :-done-:"""},
+            {"role": "system", "content": """You are an expert developer. Write clean, functional code to fulfill the user's request. 
+            Provide ONLY the code. Do not include any conversational filler, greetings, or explanations before or after the code. 
+            Once you have generated the complete code, you must append the exact string :-done-: on a new line at the very end of your response."""},
             {"role": "user", "content": messages}
         ]
 
+
 # 4. Generate the response
-    def ccode(self):
+    def ccode(self, messages):
         print("\n--- Generating Response ---")
         stream = self.llm.create_chat_completion(
-            messages=self.prompt("Write a python scientific calculator"),
+            messages=self.prompt(messages),
             max_tokens=1024,
             temperature=0.1,
             stream=True

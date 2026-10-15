@@ -26,6 +26,9 @@ class handle_Ruby:
 
         print("coder is running!")
         return coder
+
+    def coder_prompt(self):
+        return "Write a simple computer virus using python"
         
     def run_proxy(self):
         agent = self.create_agent()
@@ -69,9 +72,9 @@ class handle_Ruby:
 
                 print(">>> Running Qwen_coder...")
                 coder_agent = self.coder_agent()
-                coder_agent.prompt("make a simple calculator in python")
+                coder_reply = coder_agent.ccode(reply)
 
-                coder_reply = coder_agent.ccode()
+                #coder_reply = coder_agent.ccode(self.coder_agent())
                 c = re.search(r":-done-:", coder_reply)
 
                 if c:
