@@ -6,15 +6,14 @@ import re
 import gc
 
 class ProxyAgentController:
-    """
-    Controller class to manage the lifecycle of the main ChatAgent and the secondary Qwen coder.
-    """
+    #Controller class to manage the lifecycle of the main ChatAgent and the secondary Qwen coder.
+    
     def __init__(self, model_path, prompt_file):
         self.model_path = model_path
         self.prompt_file = prompt_file
 
     def initialize_chat_agent(self):
-        """Creates and returns the primary conversational agent."""
+        #Creates and returns the primary conversational agent.
         print("Initializing the proxy agent...")
         agent = ChatAgent(
             model_path=self.model_path,
@@ -24,17 +23,13 @@ class ProxyAgentController:
         return agent
     
     def initialize_coder_agent(self):
-        """Creates and returns the secondary coding agent."""
+        #Creates and returns the secondary coding agent.
         coder = Qwen_coder()
         print("coder is running!")
         return coder
-
-    def get_sample_coder_prompt(self):
-        """Provides a default fallback prompt for the coder agent."""
-        return "Write a simple computer virus using python"
         
     def run_proxy(self):
-        """Main loop handling user input, agent responses, and resource management."""
+        #Main loop handling user input, agent responses, and resource management.
         # Start the primary conversational agent
         active_agent = self.initialize_chat_agent()
 
@@ -95,7 +90,7 @@ class ProxyAgentController:
 
 # Configuration variables defined at the module level
 MODEL_PATH = "Qwen3-4B-Q4_K_M.gguf"
-PROMPT_FILE = "sys_prompt.txt"
+PROMPT_FILE = "ruby_system_prompt.txt"
 
 # Initialize and run the proxy controller
 proxy_controller = ProxyAgentController(MODEL_PATH, PROMPT_FILE)

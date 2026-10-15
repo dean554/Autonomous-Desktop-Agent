@@ -3,6 +3,10 @@ from llama_cpp import Llama
 # 1. Download the specific Q3_K_M GGUF model file if not already present
 
 model_path = "coders/qwen2.5-coder-3b-instruct-q3_k_m.gguf"
+prompt = "other_local_models/coder_system_prompt.txt"
+
+with open(prompt, "r", encoding="utf-8") as f:
+    coder_system_prompt = f.read()
 
 class Qwen_coder:
     def __init__(self):
@@ -17,9 +21,7 @@ class Qwen_coder:
     def prompt(self, messages):
         # 2. Create the prompt structure (Qwen2.5-Coder expects ChatML format)
         return [
-            {"role": "system", "content": """You are an expert developer. Write clean, functional code to fulfill the user's request. 
-            Provide ONLY the code. Do not include any conversational filler, greetings, or explanations before or after the code. 
-            Once you have generated the complete code, you must append the exact string :-done-: on a new line at the very end of your response."""},
+            {"role": "system", "content": coder_system_prompt},
             {"role": "user", "content": messages}
         ]
 
