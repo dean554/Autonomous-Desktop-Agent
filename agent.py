@@ -1,7 +1,10 @@
 from llama_cpp import Llama  # type: ignore
 
+MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
+PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
+
 class ChatAgent:
-    def __init__(self, model_path="Qwen3-4B-Q4_K_M.gguf", prompt_file='sys_prompt.txt', max_history=3):
+    def __init__(self, model_path=MODEL_PATH, prompt_file=PROMPT_FILE, max_history=3):
         """Initializes the LLM, loads the system prompt, and sets up memory."""
         self.max_history = max_history
         self.history = []

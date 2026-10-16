@@ -2,8 +2,8 @@ from httpx import stream
 from llama_cpp import Llama
 # 1. Download the specific Q3_K_M GGUF model file if not already present
 
-model_path = "coders/qwen2.5-coder-3b-instruct-q3_k_m.gguf"
-prompt = "other_local_models/coder_system_prompt.txt"
+model_path = "models/coders/qwen2.5-coder-3b-instruct-q3_k_m.gguf"
+prompt = "system_prompts/coder_system_prompt.txt"
 
 with open(prompt, "r", encoding="utf-8") as f:
     coder_system_prompt = f.read()

@@ -136,8 +136,8 @@ class ProxyAgentController:
                     print(">>> Model is back online.\n")
 
 # Configuration variables defined at the module level
-MODEL_PATH = "Qwen3-4B-Q4_K_M.gguf"
-PROMPT_FILE = "ruby_system_prompt.txt"
+MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
+PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
 
 # Initialize and run the proxy controller
 proxy_controller = ProxyAgentController(MODEL_PATH, PROMPT_FILE)
