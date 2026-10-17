@@ -15,6 +15,9 @@ class Qwen_coder:
             model_path=self.model_path,
             n_ctx=4096,
             n_threads=6,
+            n_threads_batch=8,
+            use_mmap=True,
+            use_mlock=False,
             verbose=False
         )
 

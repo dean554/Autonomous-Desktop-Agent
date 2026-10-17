@@ -45,9 +45,13 @@ class ProxyAgentController:
             # Retrieve the response from the active agent
             agent_reply = active_agent.chat(user_prompt)
 
+            print(f"\nAgent:\n{agent_reply}\n")
+
             # Search the reply for special command markers
             sleep_match = re.search(r"\[SLEEP:(\d+)\]", agent_reply)
-            coder_start_match = re.search(r":-start-:", agent_reply)
+            #coder_start_match = re.search(r":-start-:", agent_reply)
+            coder_planning_match = re.search(r":-planning-:", agent_reply)
+
 
             # Handle the SLEEP command
             if sleep_match:
@@ -65,33 +69,52 @@ class ProxyAgentController:
                 print(">>> Model is back online.\n")
 
             # Handle the CODER command
-            elif coder_start_match:
-                print(">>> Model requested to run the Qwen_coder. Releasing model...")
-
-                # Free up resources before loading the coder model into memory
+            elif coder_planning_match:
+                # Release the current model
                 del active_agent
                 gc.collect()
                 active_agent = None
+                self.prompt_file = CODE_PLANNER_FILE
 
-                print(">>> Running Qwen_coder...")
-                qwen_coder_instance = self.initialize_coder_agent()
-
-                # Delegate file creation, stage execution, and code appending to StagedCodeBuilder
-                self.code_builder.execute_stages(agent_reply, qwen_coder_instance)
-
-                # Clean up coder model before restoring primary model
-                print(">>> Qwen_coder has finished execution.")
-                del qwen_coder_instance
-                gc.collect()
-
-                print(">>> Restoring primary model...\n")
                 active_agent = self.initialize_chat_agent()
-                print(">>> Model is back online.\n")
+
+                print("system prompt switch to code plan.")
+                agent_reply = active_agent.chat(user_prompt)
+
+                agent_reply = ":-start-:" + agent_reply + ":-start-:"
+
+                print("-/"*20)
+                print(agent_reply)
+
+                coder_start_match = re.search(r":-start-:", agent_reply)
+
+                if coder_start_match:
+                    print(">>> Model requested to run the Qwen_coder. Releasing model...")
+                
+                    # Free up resources before loading the coder model into memory
+                    del active_agent
+                    gc.collect()
+                    active_agent = None
+                
+                    print(">>> Running Qwen_coder...")
+                    qwen_coder_instance = self.initialize_coder_agent()
+                
+                    # Clean up coder model before restoring primary model
+                    print(">>> Qwen_coder has finished execution.")
+                    del qwen_coder_instance
+                    gc.collect()
+                
+                    print(">>> Restoring primary model...\n")
+                    active_agent = self.initialize_chat_agent()
+                
+                    print(">>> Model is back online.\n")
+                
 
 
 # Configuration variables defined at the module level
 MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
 PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
+CODE_PLANNER_FILE = "system_prompts/ruby_system_prompt_code.txt"
 
 # Initialize and run the proxy controller
 proxy_controller = ProxyAgentController(MODEL_PATH, PROMPT_FILE)

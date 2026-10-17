@@ -203,4 +203,4 @@ class StagedCodeBuilder:
             print(">>> Fallback test block successfully appended.")
 
         print(f"\n>>> All stages complete. Full script saved to '{target_file}'.")
-        return last_coder_reply
+        return last_coder_reply, target_file
