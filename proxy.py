@@ -98,6 +98,10 @@ class ProxyAgentController:
                 
                     print(">>> Running Qwen_coder...")
                     qwen_coder_instance = self.initialize_coder_agent()
+
+                    # Delegate file creation, stage execution, and code appending to StagedCodeBuilder
+                    coder_reply, file_path = self.code_builder.execute_stages(agent_reply, qwen_coder_instance)
+
                 
                     # Clean up coder model before restoring primary model
                     print(">>> Qwen_coder has finished execution.")
