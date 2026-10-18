@@ -23,7 +23,7 @@ class ChatAgent:
         )
         
         # Load the system prompt
-        with open(prompt_file, 'r') as f:
+        with open(prompt_file, 'r', encoding='utf-8') as f:
             base_system_prompt = f.read()
 
         # load memory file

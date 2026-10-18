@@ -8,6 +8,7 @@ import gc
 from pathlib import Path
 
 MEMORY = Path("memory.txt")
+CODE_CHECK = "system_prompts/code_check.txt"
 
 class ProxyAgentController:
     # Controller class to manage the lifecycle of the main ChatAgent and the secondary Qwen coder.
@@ -121,8 +122,23 @@ class ProxyAgentController:
                     del qwen_coder_instance
                     gc.collect()
                 
-                    print(">>> Restoring primary model...\n")
+                    print(">>> checking the code...\n")
+                    self.prompt_file = CODE_CHECK
+
                     active_agent = self.initialize_chat_agent()
+                    with open(file_path, 'r') as f:
+                        check_c = f.read()
+                    agent_reply = active_agent.chat(check_c)
+
+                    print("report finished.")
+                    del active_agent
+                    gc.collect()
+
+                    print("switching back to Ruby...")
+
+                    self.prompt_file = PROMPT_FILE
+                    active_agent = self.initialize_chat_agent()
+                    
                 
                     print(">>> Model is back online.\n")
                 
