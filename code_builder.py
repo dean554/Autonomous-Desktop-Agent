@@ -3,7 +3,6 @@ import os
 import re
 import json
 
-
 class StagedCodeBuilder:
     """Handles parsing Ruby's JSON plan, creating the target Python file,
     formatting stage prompts, and appending generated code stage-by-stage.

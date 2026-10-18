@@ -5,7 +5,9 @@ from code_builder import StagedCodeBuilder
 import time
 import re
 import gc
+from pathlib import Path
 
+MEMORY = Path("memory.txt")
 
 class ProxyAgentController:
     # Controller class to manage the lifecycle of the main ChatAgent and the secondary Qwen coder.
@@ -31,6 +33,14 @@ class ProxyAgentController:
         print("coder is running!")
         return coder
 
+    def write_memory(self, memory_path, string):
+        if memory_path.is_file():
+            with open(memory_path, 'a')as f:
+                f.write(string)
+        else:
+            with open(memory_path, 'w')as f:
+                f.write(f"{string}\n")
+
     def run_proxy(self):
         # Main loop handling user input, agent responses, and resource management.
         active_agent = self.initialize_chat_agent()
@@ -45,13 +55,10 @@ class ProxyAgentController:
             # Retrieve the response from the active agent
             agent_reply = active_agent.chat(user_prompt)
 
-            print(f"\nAgent:\n{agent_reply}\n")
-
             # Search the reply for special command markers
             sleep_match = re.search(r"\[SLEEP:(\d+)\]", agent_reply)
-            #coder_start_match = re.search(r":-start-:", agent_reply)
             coder_planning_match = re.search(r":-planning-:", agent_reply)
-
+            Memory_match = re.search(r":-PermMemory-:", agent_reply)
 
             # Handle the SLEEP command
             if sleep_match:
@@ -67,6 +74,13 @@ class ProxyAgentController:
 
                 active_agent = self.initialize_chat_agent()
                 print(">>> Model is back online.\n")
+
+            elif Memory_match:
+                clean_reply = agent_reply.replace(":-PermMemory-:", "")
+                parts = clean_reply.split("--")
+                if len(parts) >= 2:
+                    result = parts[1].strip()
+                    self.write_memory(MEMORY, result)
 
             # Handle the CODER command
             elif coder_planning_match:
@@ -102,7 +116,6 @@ class ProxyAgentController:
                     # Delegate file creation, stage execution, and code appending to StagedCodeBuilder
                     coder_reply, file_path = self.code_builder.execute_stages(agent_reply, qwen_coder_instance)
 
-                
                     # Clean up coder model before restoring primary model
                     print(">>> Qwen_coder has finished execution.")
                     del qwen_coder_instance

@@ -3,6 +3,8 @@ from llama_cpp import Llama  # type: ignore
 MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
 PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
 
+MEMORY_FILE = "memory.txt"
+
 class ChatAgent:
     def __init__(self, model_path=MODEL_PATH, prompt_file=PROMPT_FILE, max_history=3):
         """Initializes the LLM, loads the system prompt, and sets up memory."""
@@ -16,13 +18,23 @@ class ChatAgent:
             n_threads=6,
             n_threads_batch=8,
             use_mmap=True,   # weights are paged in from disk
-            use_mlock=False, # do NOT pin into RAM on an 8 GB machine
+            use_mlock=False, # do NOT pin into RAM.
             verbose=False,
         )
         
         # Load the system prompt
         with open(prompt_file, 'r') as f:
-            self.system_prompt = f.read()
+            base_system_prompt = f.read()
+
+        # load memory file
+        try:
+            with open(MEMORY_FILE, 'r') as f:
+                permanent_memory = f.read()
+        except FileNotFoundError:
+            permanent_memory = ""
+
+        # Combine them inside the system prompt block
+        self.system_prompt = f"{base_system_prompt}\n\n## Permanent Memory & User Facts:\n{permanent_memory}"
 
     def _build_prompt(self, user_prompt):
         """Constructs the full prompt using the system prompt, history, and current input."""
@@ -64,6 +76,7 @@ class ChatAgent:
         )
         
         assistant_reply = ""
+        print("Ruby: ")
         for chunk in stream:
             token = chunk["choices"][0]["text"]
             print(token, end="", flush=True)
@@ -72,5 +85,3 @@ class ChatAgent:
         
         self._update_history(user_prompt, assistant_reply)
         return assistant_reply
-
-
