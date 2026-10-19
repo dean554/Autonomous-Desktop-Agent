@@ -6,3 +6,4 @@ a.py
 *.wav
 *.png
 sandbox*
+!.sandbox
