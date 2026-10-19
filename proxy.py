@@ -16,7 +16,6 @@ class ProxyAgentController:
     def __init__(self, model_path, prompt_file):
         self.model_path = model_path
         self.prompt_file = prompt_file
-        self.code_builder = StagedCodeBuilder()
 
     def initialize_chat_agent(self):
         # Creates and returns the primary conversational agent.
@@ -98,9 +97,6 @@ class ProxyAgentController:
 
                 agent_reply = ":-start-:" + agent_reply + ":-start-:"
 
-                print("-/"*20)
-                print(agent_reply)
-
                 coder_start_match = re.search(r":-start-:", agent_reply)
 
                 if coder_start_match:
@@ -113,9 +109,19 @@ class ProxyAgentController:
                 
                     print(">>> Running Qwen_coder...")
                     qwen_coder_instance = self.initialize_coder_agent()
+                    coder_output_code = qwen_coder_instance.ccode(agent_reply)
+
+                    Memory_match = re.search(r"\[(.*?)\]", agent_reply)
+
+                    if Memory_match:
+                        file_name = Memory_match.group(1) 
+                        print(f"Extracted name: {file_name}")
+                    else:
+                        file_name = "place_holer.txt"
 
                     # Delegate file creation, stage execution, and code appending to StagedCodeBuilder
-                    coder_reply, file_path = self.code_builder.execute_stages(agent_reply, qwen_coder_instance)
+                    code_builder = StagedCodeBuilder(file_name, coder_output_code)
+                    code_builder.execute()
 
                     # Clean up coder model before restoring primary model
                     print(">>> Qwen_coder has finished execution.")
@@ -126,7 +132,7 @@ class ProxyAgentController:
                     self.prompt_file = CODE_CHECK
 
                     active_agent = self.initialize_chat_agent()
-                    with open(file_path, 'r') as f:
+                    with open(f"sandbox/{file_name}", 'r') as f:
                         check_c = f.read()
                     agent_reply = active_agent.chat(check_c)
 

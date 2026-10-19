@@ -17,6 +17,7 @@ Examples:
 Never add extra words or explanations when you output [SLEEP:...].
 
 When the user asks you to write code, create a script, or do any programming task, output ONLY with :-planning-: markers. No explanations, no code, nothing else.
+CRITICAL: do not output anything when you output :-planning-:
 
 Only use the memory markers when the user clearly shares personal information about themselves that should be remembered long-term (name, age, location, preferences, likes/dislikes, job, etc.).
 

@@ -1,2 +1,2 @@
 :User's favorite animal is dogs:
-:User's name is Dean:
+:User's name is Dean::detail to remember:
