@@ -18,7 +18,7 @@ class ChatAgent:
             n_threads=6,
             n_threads_batch=8,
             use_mmap=True,   # weights are paged in from disk
-            use_mlock=False, # do NOT pin into RAM.
+            use_mlock=False, # do not pin into RAM.
             verbose=False,
         )
         
@@ -40,7 +40,7 @@ class ChatAgent:
         """Constructs the full prompt using the system prompt, history, and current input."""
         full_prompt = f"<|im_start|>system\n{self.system_prompt}<|im_end|>\n"
         
-        # Add the last ≤3 conversation turns
+        # Add the last 3 conversation turns
         for past_user, past_assistant in self.history:
             full_prompt += (
                 f"<|im_start|>user\n{past_user}<|im_end|>\n"

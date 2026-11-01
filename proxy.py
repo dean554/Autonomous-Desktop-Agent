@@ -71,7 +71,7 @@ class ProxyAgentController:
         listener = threading.Thread(target=self.listen_for_interrupt, daemon=True)
         listener.start()
 
-        #Pass the event flag to your chat agent
+        #Pass the event flag to the chat agent
         agent_reply = self.active_agent.chat(special_p, stop_event=self.interrupt_event)
 
         if self.interrupt_event.is_set():
@@ -79,7 +79,7 @@ class ProxyAgentController:
 
 
     def run_proxy(self):
-        # Main loop handling user input, agent responses, and resource management.
+        # main loop handling user input, agent responses, and resource management.
         self.active_agent = self.initialize_chat_agent()
         
         while True:
@@ -92,15 +92,15 @@ class ProxyAgentController:
                 self.free_state()
                 continue
 
-            # Retrieve the response from the active agent
+            # retrieve the response from the active agent
             agent_reply = self.active_agent.chat(user_prompt)
 
-            # Search the reply for special command markers
+            # search the reply for special command markers
             sleep_match = re.search(r"\[SLEEP:(\d+)\]", agent_reply)
             coder_planning_match = re.search(r":-planning-:", agent_reply)
             Memory_match = re.search(r":-PermMemory-:", agent_reply)
 
-            # Handle the SLEEP command
+            # handle the SLEEP command
             if sleep_match:
                 sleep_duration = int(sleep_match.group(1))
                 print(f"\n>>> Model requested sleep for {sleep_duration} seconds. Releasing model...")
@@ -120,9 +120,9 @@ class ProxyAgentController:
                     result = parts[1].strip()
                     self.write_memory(MEMORY, result)
 
-            # Handle the CODER command
+            # handle the CODER command
             elif coder_planning_match:
-                # Release the current model
+                # release the current model
                 self.exit_model()
                 self.prompt_file = CODE_PLANNER_FILE
 
@@ -138,7 +138,7 @@ class ProxyAgentController:
                 if coder_start_match:
                     print(">>> Model requested to run the Qwen_coder. Releasing model...")
                 
-                    # Free up resources before loading the coder model into memory
+                    # free up resources before loading the coder model into memory
                     self.exit_model()
                 
                     print(">>> Running Qwen_coder...")
@@ -153,11 +153,11 @@ class ProxyAgentController:
                     else:
                         file_name = "place_holer.txt"
 
-                    # Delegate file creation, stage execution, and code appending to StagedCodeBuilder
+                    # delegate file creation, stage execution, and code appending to StagedCodeBuilder
                     code_builder = StagedCodeBuilder(file_name, coder_output_code)
                     code_builder.execute()
 
-                    # Clean up coder model before restoring primary model
+                    # clean up coder model before restoring primary model
                     print(">>> Qwen_coder has finished execution.")
                     del qwen_coder_instance
                     gc.collect()
@@ -180,14 +180,10 @@ class ProxyAgentController:
                 
                     print(">>> Model is back online.\n")
                 
-
-
-# Configuration variables defined at the module level
 MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
 PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
 CODE_PLANNER_FILE = "system_prompts/ruby_system_prompt_code.txt"
 
-# Initialize and run the proxy controller
 proxy_controller = ProxyAgentController(MODEL_PATH, PROMPT_FILE)
 
 if __name__ == "__main__":
