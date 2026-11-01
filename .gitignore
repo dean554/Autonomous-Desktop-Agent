@@ -6,4 +6,5 @@ a.py
 *.wav
 *.png
 sandbox*
-!.sandbox
+net
+net copy

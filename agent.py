@@ -3,7 +3,7 @@ from llama_cpp import Llama  # type: ignore
 MODEL_PATH = "models/main/Qwen3-4B-Q4_K_M.gguf"
 PROMPT_FILE = "system_prompts/ruby_system_prompt.txt"
 
-MEMORY_FILE = "memory.txt"
+MEMORY_FILE = "memory/memory.txt"
 
 class ChatAgent:
     def __init__(self, model_path=MODEL_PATH, prompt_file=PROMPT_FILE, max_history=3):
@@ -62,7 +62,7 @@ class ChatAgent:
         if len(self.history) > self.max_history:
             self.history.pop(0) # drop the oldest turn
 
-    def chat(self, user_prompt):
+    def chat(self, user_prompt, stop_event=None):
         """Generates and streams the response for a given prompt."""
         full_prompt = self._build_prompt(user_prompt)
         
@@ -78,6 +78,10 @@ class ChatAgent:
         assistant_reply = ""
         print("Ruby: ")
         for chunk in stream:
+            # Check if the user triggered the interrupt event from proxy.py
+            if stop_event and stop_event.is_set():
+                print("\n[Interrupted]")
+                break
             token = chunk["choices"][0]["text"]
             print(token, end="", flush=True)
             assistant_reply += token

@@ -6,8 +6,11 @@ import time
 import re
 import gc
 from pathlib import Path
+import threading
+import queue
+import sys
 
-MEMORY = Path("memory.txt")
+MEMORY = Path("memory/memory.txt")
 CODE_CHECK = "system_prompts/code_check.txt"
 
 class ProxyAgentController:
@@ -16,6 +19,7 @@ class ProxyAgentController:
     def __init__(self, model_path, prompt_file):
         self.model_path = model_path
         self.prompt_file = prompt_file
+        self.interrupt_event = threading.Event() #shared event to signal when to interrupt
 
     def initialize_chat_agent(self):
         # Creates and returns the primary conversational agent.
@@ -41,19 +45,55 @@ class ProxyAgentController:
             with open(memory_path, 'w')as f:
                 f.write(f"{string}\n")
 
+    def exit_model(self):
+        del self.active_agent
+        gc.collect()
+        self.active_agent = None
+
+    def listen_for_interrupt(self):
+        #This waits in the background until the user presses Enter
+        sys.stdin.readline()
+        self.interrupt_event.set()
+
+    def free_state(self):
+        self.exit_model()
+
+        self.prompt_file = CODE_PLANNER_FILE
+        self.active_agent = self.initialize_chat_agent()
+        """with open("special_prompt.txt", 'r') as f:
+            special_p = f.read()"""
+        special_p = "Improve your self"
+        
+        #Clear any previous interrupt signals before starting
+        self.interrupt_event.clear()
+        
+        #Start the listener thread in the background
+        listener = threading.Thread(target=self.listen_for_interrupt, daemon=True)
+        listener.start()
+
+        #Pass the event flag to your chat agent
+        agent_reply = self.active_agent.chat(special_p, stop_event=self.interrupt_event)
+
+        if self.interrupt_event.is_set():
+            print("\n[System] AI response was interrupted by user.")
+
+
     def run_proxy(self):
         # Main loop handling user input, agent responses, and resource management.
-        active_agent = self.initialize_chat_agent()
-
+        self.active_agent = self.initialize_chat_agent()
+        
         while True:
             user_prompt = input("User: ").strip()
 
             if user_prompt.lower() in ["exit", "quit"]:
                 print("Exiting the chat.")
                 break
+            elif user_prompt.lower() in ["free", "im off"]:
+                self.free_state()
+                continue
 
             # Retrieve the response from the active agent
-            agent_reply = active_agent.chat(user_prompt)
+            agent_reply = self.active_agent.chat(user_prompt)
 
             # Search the reply for special command markers
             sleep_match = re.search(r"\[SLEEP:(\d+)\]", agent_reply)
@@ -65,14 +105,12 @@ class ProxyAgentController:
                 sleep_duration = int(sleep_match.group(1))
                 print(f"\n>>> Model requested sleep for {sleep_duration} seconds. Releasing model...")
 
-                del active_agent
-                gc.collect()
-                active_agent = None
+                self.exit_model()
 
                 print(f">>> Sleeping for {sleep_duration} seconds...")
                 time.sleep(sleep_duration)
 
-                active_agent = self.initialize_chat_agent()
+                self.active_agent = self.initialize_chat_agent()
                 print(">>> Model is back online.\n")
 
             elif Memory_match:
@@ -85,15 +123,13 @@ class ProxyAgentController:
             # Handle the CODER command
             elif coder_planning_match:
                 # Release the current model
-                del active_agent
-                gc.collect()
-                active_agent = None
+                self.exit_model()
                 self.prompt_file = CODE_PLANNER_FILE
 
-                active_agent = self.initialize_chat_agent()
+                self.active_agent = self.initialize_chat_agent()
 
                 print("system prompt switch to code plan.")
-                agent_reply = active_agent.chat(user_prompt)
+                agent_reply = self.active_agent.chat(user_prompt)
 
                 agent_reply = ":-start-:" + agent_reply + ":-start-:"
 
@@ -103,9 +139,7 @@ class ProxyAgentController:
                     print(">>> Model requested to run the Qwen_coder. Releasing model...")
                 
                     # Free up resources before loading the coder model into memory
-                    del active_agent
-                    gc.collect()
-                    active_agent = None
+                    self.exit_model()
                 
                     print(">>> Running Qwen_coder...")
                     qwen_coder_instance = self.initialize_coder_agent()
@@ -131,19 +165,17 @@ class ProxyAgentController:
                     print(">>> checking the code...\n")
                     self.prompt_file = CODE_CHECK
 
-                    active_agent = self.initialize_chat_agent()
+                    self.active_agent = self.initialize_chat_agent()
                     with open(f"sandbox/{file_name}", 'r') as f:
                         check_c = f.read()
-                    agent_reply = active_agent.chat(check_c)
+                    agent_reply = self.active_agent.chat(check_c)
 
-                    print("report finished.")
-                    del active_agent
-                    gc.collect()
+                    self.exit_model()
 
                     print("switching back to Ruby...")
 
                     self.prompt_file = PROMPT_FILE
-                    active_agent = self.initialize_chat_agent()
+                    self.active_agent = self.initialize_chat_agent()
                     
                 
                     print(">>> Model is back online.\n")
